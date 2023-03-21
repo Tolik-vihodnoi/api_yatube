@@ -18,5 +18,4 @@ router.register(r'posts/(?P<post_id>\d+)/comments',
 urlpatterns = [
     path('api-token-auth/', views.obtain_auth_token),
     path('', include(router.urls))
-    # path('admin/', admin.site.urls),
 ]
