@@ -1,9 +1,10 @@
-from django.shortcuts import get_list_or_404, get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.exceptions import PermissionDenied
 
 from api.serializers import CommentSerializer, GroupSerializer, PostSerializer
-from posts.models import Comment, Group, Post
+from api.utils import check_not_nonrequired_fields_or_raise_exception
+from posts.models import Group, Post
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -11,9 +12,11 @@ class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
 
     def perform_create(self, serializer):
+        check_not_nonrequired_fields_or_raise_exception(serializer)
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):
+        check_not_nonrequired_fields_or_raise_exception(serializer)
         if self.request.user != serializer.instance.author:
             raise PermissionDenied
         super(PostViewSet, self).perform_update(serializer)
@@ -38,11 +41,13 @@ class CommentViewSet(viewsets.ModelViewSet):
         return post.comments.all()
 
     def perform_create(self, serializer):
+        check_not_nonrequired_fields_or_raise_exception(serializer)
         post_id = self.kwargs['post_id']
         post = get_object_or_404(Post, id=post_id)
         serializer.save(author=self.request.user, post=post)
 
     def perform_update(self, serializer):
+        check_not_nonrequired_fields_or_raise_exception(serializer)
         if self.request.user != serializer.instance.author:
             raise PermissionDenied
         super(CommentViewSet, self).perform_update(serializer)
