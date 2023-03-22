@@ -1,30 +1,18 @@
-from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
-from rest_framework.exceptions import PermissionDenied
 
+from api.permissions import IsOwnerPermission
 from api.serializers import CommentSerializer, GroupSerializer, PostSerializer
-from api.utils import check_not_nonrequired_fields_or_raise_exception
+from api.utils import retrieve_post
 from posts.models import Group, Post
 
 
 class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     queryset = Post.objects.all()
+    permission_classes = (IsOwnerPermission, )
 
     def perform_create(self, serializer):
-        check_not_nonrequired_fields_or_raise_exception(serializer)
         serializer.save(author=self.request.user)
-
-    def perform_update(self, serializer):
-        check_not_nonrequired_fields_or_raise_exception(serializer)
-        if self.request.user != serializer.instance.author:
-            raise PermissionDenied
-        super(PostViewSet, self).perform_update(serializer)
-
-    def perform_destroy(self, instance):
-        if self.request.user != instance.author:
-            raise PermissionDenied
-        super(PostViewSet, self).perform_destroy(instance)
 
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
@@ -34,25 +22,12 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
+    permission_classes = (IsOwnerPermission, )
 
     def get_queryset(self):
-        post_id = self.kwargs['post_id']
-        post = get_object_or_404(Post, id=post_id)
-        return post.comments.all()
+        post = retrieve_post(self)
+        return post.comments
 
     def perform_create(self, serializer):
-        check_not_nonrequired_fields_or_raise_exception(serializer)
-        post_id = self.kwargs['post_id']
-        post = get_object_or_404(Post, id=post_id)
+        post = retrieve_post(self)
         serializer.save(author=self.request.user, post=post)
-
-    def perform_update(self, serializer):
-        check_not_nonrequired_fields_or_raise_exception(serializer)
-        if self.request.user != serializer.instance.author:
-            raise PermissionDenied
-        super(CommentViewSet, self).perform_update(serializer)
-
-    def perform_destroy(self, instance):
-        if self.request.user != instance.author:
-            raise PermissionDenied
-        super(CommentViewSet, self).perform_destroy(instance)
