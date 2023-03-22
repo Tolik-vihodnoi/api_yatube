@@ -118,6 +118,6 @@ STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-#Custom vars
+# Custom vars
 
 DISP_LETTERS = 12
