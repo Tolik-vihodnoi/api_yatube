@@ -1,15 +1,24 @@
 from rest_framework import viewsets
+from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 
 from api.permissions import IsOwnerPermission
 from api.serializers import CommentSerializer, GroupSerializer, PostSerializer
-from api.utils import retrieve_post
 from posts.models import Group, Post
+
+
+class CustomBaseViewSet:
+
+    @staticmethod
+    def retrieve_post_obj(obj):
+        post_id = obj.kwargs.get('post_id')
+        return get_object_or_404(Post, id=post_id)
 
 
 class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     queryset = Post.objects.all()
-    permission_classes = (IsOwnerPermission, )
+    permission_classes = (IsAuthenticated, IsOwnerPermission)
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -20,14 +29,14 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Group.objects.all()
 
 
-class CommentViewSet(viewsets.ModelViewSet):
+class CommentViewSet(viewsets.ModelViewSet, CustomBaseViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (IsOwnerPermission, )
+    permission_classes = (IsAuthenticated, IsOwnerPermission)
 
     def get_queryset(self):
-        post = retrieve_post(self)
+        post = self.retrieve_post_obj(self)
         return post.comments
 
     def perform_create(self, serializer):
-        post = retrieve_post(self)
+        post = self.retrieve_post_obj(self)
         serializer.save(author=self.request.user, post=post)
