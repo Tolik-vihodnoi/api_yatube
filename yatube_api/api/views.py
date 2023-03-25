@@ -7,7 +7,7 @@ from api.serializers import CommentSerializer, GroupSerializer, PostSerializer
 from posts.models import Group, Post
 
 
-class CustomBaseViewSet:
+class GetPostMixin:
 
     @staticmethod
     def retrieve_post_obj(obj):
@@ -29,7 +29,7 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Group.objects.all()
 
 
-class CommentViewSet(viewsets.ModelViewSet, CustomBaseViewSet):
+class CommentViewSet(GetPostMixin, viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (IsAuthenticated, IsOwnerPermission)
 
